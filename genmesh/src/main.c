@@ -76,10 +76,8 @@ int main(int argc, char *argv[]) {
 
   geoMeshImport();
   geoAssembleDomains();
-  //geoSetDomainName(0, "symmetry");
-  //geoSetDomainName(1, "top");
-  //geoSetDomainName(4, "arc");
-  //geoSetDomainName(7, "base");
+  geoSetDomainName(0, "Free");
+  geoSetDomainName(1, "Inner");
 
   geoMeshWrite("../../data/mesh.txt");
 

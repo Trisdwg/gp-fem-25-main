@@ -223,8 +223,10 @@ void geoAssembleDomains(void){
   double rin = theGeometry->Rinner;
   double rout = theGeometry->Router;
   double limit = rin + (rout-rin)/2.0;
+  // printf("Limit: %f\n", limit);
 
   int domainAppartenance[theGeometry->nDomains];
+  // printf("Number of domains: %d\n", theGeometry->nDomains);
   int innerNElem = 0;
   int freeNElem = 0;
 
@@ -233,8 +235,8 @@ void geoAssembleDomains(void){
     domainAppartenance[i] = 0;
     femDomain *currentDomain = theGeometry->theDomains[i];
     int edge = currentDomain->elem[0];
-    int nodeA = currentDomain->mesh->elem[edge];
-    int nodeB = currentDomain->mesh->elem[edge+1];
+    int nodeA = currentDomain->mesh->elem[2*edge];
+    int nodeB = currentDomain->mesh->elem[2*edge+1];
     double xA = theGeometry->theNodes->X[nodeA];
     double yA = theGeometry->theNodes->Y[nodeA];
     double xB = theGeometry->theNodes->X[nodeB];
@@ -242,6 +244,7 @@ void geoAssembleDomains(void){
     double x = xA + (xB-xA)/2.0;
     double y = yA + (yB-yA)/2.0;
     double dist = sqrt((x)*(x) + (y)*(y));
+    // printf("Domain %i : %f\n", i, dist);
     if(dist < limit){
       domainAppartenance[i] = 1;
       innerNElem += currentDomain->nElem;
@@ -265,6 +268,7 @@ void geoAssembleDomains(void){
   int innerIndex = 0;
   for(int i = 0; i < theGeometry->nDomains; i++)
   {
+    // printf("Domain %d: %d\n", i, domainAppartenance[i]);  
     femDomain *currentDomain = theGeometry->theDomains[i];
     if(domainAppartenance[i] == 1){
       for(int j = 0; j < currentDomain->nElem; j++){
