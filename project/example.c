@@ -15,7 +15,9 @@ void elasticity_solve(const char *meshfile, const char *outfile, double E, doubl
 
   // Assemble and solve
   // femElasticityPrint(theProblem);
+  //double *theSoluce = 
   double *theSoluce = femElasticitySolve(theProblem);
+
   
   // Write out the solution
   int nNodes = theGeometry->theNodes->nNodes;

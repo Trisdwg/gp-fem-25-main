@@ -37,6 +37,7 @@ typedef struct {
   int nNodes;
   double *X;
   double *Y;
+  int *number; 
 } femNodes;
 
 /**
