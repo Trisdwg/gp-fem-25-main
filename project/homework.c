@@ -1,4 +1,5 @@
 #include "fem.h"
+void renumberMesh(femGeo *theGeometry);
 
 double *femElasticitySolve(femProblem *theProblem) {
 
@@ -15,11 +16,11 @@ double *femElasticitySolve(femProblem *theProblem) {
 
   int nLocal = theMesh->nLocalNode;
 
-  double a = theProblem->A;
-  double b = theProblem->B;
-  double c = theProblem->C;
-  double rho = theProblem->rho;
-  double g = theProblem->g;
+  //double a = theProblem->A;
+  //double b = theProblem->B;
+  //double c = theProblem->C;
+  //double rho = theProblem->rho;
+  //double g = theProblem->g;
   double **A = theSystem->A;
   double *B = theSystem->B;
 
@@ -36,6 +37,7 @@ double *femElasticitySolve(femProblem *theProblem) {
 
   return femFullSystemEliminate(theSystem);
 }
+int ComputeBand(femFullSystem *mySystem);
 
 
 void renumberMesh(femGeo *theGeometry) {
@@ -268,7 +270,7 @@ double *femFullSystemEliminateBand(femFullSystem *mySystem) {
   double **A = mySystem->A;
   double *B = mySystem->B;
   int size = mySystem->size;
-  int band = (int)ComputeBand(mySystem); // Compute the half-bandwidth
+  int band = ComputeBand(mySystem); // Compute the half-bandwidth
 
   // Forward elimination (only within the band)
   for (int k = 0; k < size; k++) {
@@ -311,7 +313,7 @@ femBandSystem *femBandSystemCreate(femFullSystem *mySystem) {
   femBandSystemCreate->size = mySystem->size;
   femBandSystemCreate->band = ComputeBand(mySystem);
 }
-double ComputeBand(femFullSystem *mySystem) {
+int ComputeBand(femFullSystem *mySystem) {
   double **A;
   int size;
   int band = 0;
@@ -331,7 +333,7 @@ double ComputeBand(femFullSystem *mySystem) {
           }
       }
   }
-  return (double)band;
+  return band;
 }
 
 
