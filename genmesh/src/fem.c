@@ -408,6 +408,29 @@ void geoSetDomainName(int iDomain, char *name) {
   sprintf(theGeometry.theDomains[iDomain]->name, "%s", name);
 }
 
+void geoFuseDomains(int iDomain1, int iDomain2){
+  if (iDomain1 >= theGeometry.nDomains || iDomain2 >= theGeometry.nDomains)
+    Error("Illegal domain number");
+  if (iDomain1 == iDomain2)
+    Error("Cannot fuse a domain with itself");
+  femDomain *theDomain1 = theGeometry.theDomains[iDomain1];
+  femDomain *theDomain2 = theGeometry.theDomains[iDomain2];
+  int nElem1 = theDomain1->nElem;
+  int nElem2 = theDomain2->nElem;
+  theDomain1->elem = realloc(theDomain1->elem, sizeof(int) * (nElem1 + nElem2));
+  for (int i = 0; i < nElem2; i++) {
+    theDomain1->elem[nElem1 + i] = theDomain2->elem[i];
+  }
+  theDomain1->nElem += nElem2;
+  free(theDomain2->elem);
+  free(theDomain2);
+  for (int i = iDomain2; i < theGeometry.nDomains - 1; i++) {
+    theGeometry.theDomains[i] = theGeometry.theDomains[i + 1];
+  }
+  theGeometry.nDomains--;
+  theGeometry.theDomains = realloc(theGeometry.theDomains, sizeof(femDomain *) * theGeometry.nDomains);
+}
+
 int geoGetDomain(char *name) {
   int theIndex = -1;
   int nDomains = theGeometry.nDomains;

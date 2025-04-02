@@ -75,6 +75,7 @@ int main(int argc, char *argv[]) {
   // geoMeshGenerateMshFile("../../data/mesh.msh");
 
   geoMeshImport();
+  geoAssembleDomains();
   //geoSetDomainName(0, "symmetry");
   //geoSetDomainName(1, "top");
   //geoSetDomainName(4, "arc");
@@ -127,6 +128,11 @@ int main(int argc, char *argv[]) {
       }
       if (glfwGetKey(window, 'N') == GLFW_PRESS && freezingButton == FALSE) {
         domain++;
+        freezingButton = TRUE;
+        told = t;
+      }
+      if (glfwGetKey(window, 'P') == GLFW_PRESS && freezingButton == FALSE) {
+        domain += theGeometry->nDomains - 1;
         freezingButton = TRUE;
         told = t;
       }

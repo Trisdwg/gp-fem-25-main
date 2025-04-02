@@ -193,6 +193,8 @@ void geoMeshGenerate(double lc) {
 }
 
 void geoMeshGenerateGeo(void) {
+  geoMeshGenerate(0.1);
+  return;
 }
 
 void geoMeshGenerateGeoFile(const char *filename) {
@@ -211,5 +213,80 @@ void geoMeshGenerateMshFile(const char *filename) {
   int ierr;
   gmshOpen(filename, &ierr);
   ErrorGmsh(ierr);
+  return;
+}
+
+void geoAssembleDomains(void){
+
+  
+  femGeo *theGeometry = geoGetGeometry();
+  double rin = theGeometry->Rinner;
+  double rout = theGeometry->Router;
+  double limit = rin + (rout-rin)/2.0;
+
+  int domainAppartenance[theGeometry->nDomains];
+  int innerNElem = 0;
+  int freeNElem = 0;
+
+  for(int i = 0; i < theGeometry->nDomains; i++)
+  {
+    domainAppartenance[i] = 0;
+    femDomain *currentDomain = theGeometry->theDomains[i];
+    int edge = currentDomain->elem[0];
+    int nodeA = currentDomain->mesh->elem[edge];
+    int nodeB = currentDomain->mesh->elem[edge+1];
+    double xA = theGeometry->theNodes->X[nodeA];
+    double yA = theGeometry->theNodes->Y[nodeA];
+    double xB = theGeometry->theNodes->X[nodeB];
+    double yB = theGeometry->theNodes->Y[nodeB];
+    double x = xA + (xB-xA)/2.0;
+    double y = yA + (yB-yA)/2.0;
+    double dist = sqrt((x)*(x) + (y)*(y));
+    if(dist < limit){
+      domainAppartenance[i] = 1;
+      innerNElem += currentDomain->nElem;
+    }
+    else{
+      freeNElem += currentDomain->nElem;
+    }
+  }
+  //newdomains
+  femDomain *freeDomain = malloc(sizeof(femDomain));
+  // freeDomain->name = "Free";
+  freeDomain->mesh = theGeometry->theEdges;
+  freeDomain->nElem = freeNElem;
+  freeDomain->elem = malloc(sizeof(int) * freeNElem);
+  femDomain *innerDomain = malloc(sizeof(femDomain));
+  // freeDomain->name = "Inner";
+  innerDomain->mesh = theGeometry->theEdges;
+  innerDomain->nElem = innerNElem;
+  innerDomain->elem = malloc(sizeof(int) * innerNElem);
+  int freeIndex = 0;
+  int innerIndex = 0;
+  for(int i = 0; i < theGeometry->nDomains; i++)
+  {
+    femDomain *currentDomain = theGeometry->theDomains[i];
+    if(domainAppartenance[i] == 1){
+      for(int j = 0; j < currentDomain->nElem; j++){
+        innerDomain->elem[innerIndex] = currentDomain->elem[j];
+        innerIndex++;
+      }
+    }
+    else{
+      for(int j = 0; j < currentDomain->nElem; j++){
+        freeDomain->elem[freeIndex] = currentDomain->elem[j];
+        freeIndex++;
+      }
+    }
+    currentDomain->nElem = 0;
+    free(currentDomain->elem);
+    currentDomain->mesh = NULL;
+    free(currentDomain);
+  }
+  theGeometry->theDomains = realloc(theGeometry->theDomains, sizeof(femDomain *) * 2);
+  theGeometry->theDomains[0] = freeDomain;
+  theGeometry->theDomains[1] = innerDomain;
+  theGeometry->nDomains = 2;
+
   return;
 }
