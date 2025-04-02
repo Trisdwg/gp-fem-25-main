@@ -33,7 +33,7 @@ double *femElasticitySolve(femProblem *theProblem) {
     }
   }
 
-  return femFullSystemEliminate(theSystem);
+  return femFullSystemEliminateBand(theSystem);
 }
 
 

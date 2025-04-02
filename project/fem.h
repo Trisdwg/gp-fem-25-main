@@ -135,6 +135,13 @@ typedef struct {
 } femFullSystem;
 
 typedef struct {
+  double *B;
+  double **A;        
+  int size;
+  int band;        
+} femBandSystem;
+
+typedef struct {
   femDomain *domain;
   femBoundaryType type;
   double value;
