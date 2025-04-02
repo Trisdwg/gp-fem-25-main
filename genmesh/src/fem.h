@@ -50,9 +50,8 @@ typedef struct {
 } femDomain;
 
 typedef struct {
-  double Rinner, Router, curvature, curvatureRatio;
-  double h;
-  double LxPlate, LyPlate;
+  double Rinner, Router, curvature, curvatureRatio, toothL, toothW;
+  double h, dhCenter, hCenter, dhTooth, hTooth,forcePositionX, forcePositionY, forceRadius;
   femElementType elementType;
   double (*geoSize)(double x, double y);
   femNodes *theNodes;

@@ -9,25 +9,103 @@
 //  (4) Obtenir la geometrie en lisant un fichier .geo de GMSH
 
 double geoSize(double x, double y) {
+  femGeo *theGeometry = geoGetGeometry();
+  double dc = 3.5;
+  theGeometry->dhCenter = dc;
+  double hc = 0.1;
+  theGeometry->hCenter = hc;
+  double forcePosx = 50.0;
+  theGeometry->forcePositionX = forcePosx;
+  double forcePosy = 0.0;
+  theGeometry->forcePositionY = forcePosy;
+  double forceR = 31.0;
+  theGeometry->forceRadius = forceR;
+  double dt = 10.0;
+  theGeometry->dhTooth = dt;
+  double ht = 0.1;
+  theGeometry->hTooth = ht;
+  double h = 2.0;
+  theGeometry->h = h;
+  double curvRatio = theGeometry->curvatureRatio;
+  double curv = theGeometry->curvature;
+  double rin = theGeometry->Rinner;
+  double rout = theGeometry->Router;
+  double toothLength = theGeometry->toothL;
+  
+  double distcenter = sqrt((y)*(y) + (x)*(x));
+  double htemp = h;
+  if(distcenter <= rin+dc)
+  {
+    double alpha = curvRatio * (2.0*M_PI/3.0);
+    double beta = 2.0*asin(rin*curv*sin(alpha/2.0));
+    double dist = rin*cos(alpha/2.0) + cos(beta/2.0)/curv;
+    double distInner1 = sqrt((y-dist)*(y-dist) + (x)*(x));
+    double distInner2 = sqrt((y-dist*cos(2.0*M_PI/3.0))*(y-dist*cos(2.0*M_PI/3.0)) + (x-dist*sin(2.0*M_PI/3.0))*(x-dist*sin(2.0*M_PI/3.0)));
+    double distInner3 = sqrt((y-dist*cos(4.0*M_PI/3.0))*(y-dist*cos(4.0*M_PI/3.0)) + (x-dist*sin(4.0*M_PI/3.0))*(x-dist*sin(4.0*M_PI/3.0)));
+    double distEdge = distcenter - rin;
 
-  return 1.0;
+    double tolerance = 1.0;
+    if(distInner1 <= 1/curv+tolerance){
+      double theta = asin(x/distInner1);
+      if(theta < alpha/2.0 && theta > -alpha/2.0){
+        distEdge = 1/curv - distInner1;
+      }
+    }
+    if(distInner2 <= 1/curv+tolerance){
+      double theta = M_PI/3.0 - atan((dist*sin(2.0*M_PI/3.0)-x)/(y-dist*cos(2.0*M_PI/3.0)));
+      if(theta < alpha/2.0 && theta > -alpha/2.0){
+        distEdge = 1/curv - distInner2;
+      }
+    }
+    if(distInner3 <= 1/curv+tolerance){
+      double theta = -M_PI/3.0 - atan((dist*sin(4.0*M_PI/3.0)-x)/(y-dist*cos(4.0*M_PI/3.0)));
+      if(theta < alpha/2.0 && theta > -alpha/2.0){
+        distEdge = 1/curv - distInner3;
+      }
+    }
+    if(distEdge <= dc)
+    {
+      htemp = hc + 3*(h-hc)*((distEdge/dc)*(distEdge/dc)) + 2*(hc-h)*((distEdge/dc)*(distEdge/dc)*(distEdge/dc));
+      h = fmin(htemp, h);
+    }
+  }
+  
+  htemp = h;
+  double distForce = sqrt((y-forcePosy)*(y-forcePosy) + (x-forcePosx)*(x-forcePosx));
+  if(distForce <= forceR)
+  {
+    double distEdge = rout+toothLength-distcenter;
+    if(distEdge <= dt)
+    {
+      htemp = ht + 3*(h-hc)*((distEdge/dt)*(distEdge/dt)) + 2*(hc-h)*((distEdge/dt)*(distEdge/dt)*(distEdge/dt));
+      h = fmin(htemp, h);
+    }
+
+  }
+
+  return h;
+
 }
 
 void geoMeshGenerate(double lc) {
   femGeo *theGeometry = geoGetGeometry();
-  theGeometry->LxPlate = 1.0;
-  theGeometry->LyPlate = 1.0;
-  theGeometry->h = 1.0 * 0.05;
+  // theGeometry->LxPlate = 1.0;
+  // theGeometry->LyPlate = 1.0;
+  // theGeometry->h = 1.0 * 0.05;
   double ri = 18.85;
   double ro = 25.0;
   double curv = 1.0/(1.0*ri);
   double curvRatio = 0.4583333333333333;
   int nTeeth = 32;
+  double toothLength = 3.0;
+  double toothWidth = 1.5;
   theGeometry->Rinner = ri;
   theGeometry->Router = ro;
   theGeometry->curvature = curv;
   theGeometry->curvatureRatio = curvRatio;
   theGeometry->elementType = FEM_TRIANGLE;
+  theGeometry->toothL = toothLength;
+  theGeometry->toothW = toothWidth;
 
   geoSetSizeCallback(geoSize);
 
@@ -38,6 +116,7 @@ void geoMeshGenerate(double lc) {
   if(ri*sin(alpha/2.0) > 1/curv)
   {
     printf("Error: curvRatio is too high\n");
+    return;
   }
   double beta = 2.0*asin(ri*curv*sin(alpha/2.0));
   double dist = ri*cos(alpha/2.0) + cos(beta/2.0)/curv;
@@ -68,9 +147,6 @@ void geoMeshGenerate(double lc) {
   ErrorGmsh(ierr);
 
   // Create tooth structure
-  double toothLength = 3.0;
-  double toothWidth = 1.5;
-  double toothAngle = 2*M_PI*5.0/360;
   int idTooth = gmshModelOccAddDisk(ro,0,0,toothLength,toothWidth,-1,NULL,NULL,NULL,NULL, &ierr);
   ErrorGmsh(ierr);
   int tooth[] = {2, idTooth};
@@ -117,64 +193,6 @@ void geoMeshGenerate(double lc) {
 }
 
 void geoMeshGenerateGeo(void) {
-  femGeo *theGeometry = geoGetGeometry();
-  double Lx = 1.0;
-  double Ly = 1.0;
-  theGeometry->LxPlate = Lx;
-  theGeometry->LyPlate = Ly;
-  theGeometry->h = Lx * 0.05;
-  theGeometry->elementType = FEM_TRIANGLE;
-
-  geoSetSizeCallback(geoSize);
-
-  /*
-  4 ------------------ 3
-  |                    |
-  |                    |
-  5 ------- 6          |
-             \         |
-              )        |
-             /         |
-  8 ------- 7          |
-  |                    |
-  |                    |
-  1 ------------------ 2
-  */
-
-  int ierr;
-  double w = theGeometry->LxPlate;
-  double h = theGeometry->LyPlate;
-  double r = w / 4;
-  double lc = theGeometry->h;
-
-  int p1 = gmshModelGeoAddPoint(-w / 2, -h / 2, 0., lc, 1, &ierr);
-  int p2 = gmshModelGeoAddPoint(w / 2, -h / 2, 0., lc, 2, &ierr);
-  int p3 = gmshModelGeoAddPoint(w / 2, h / 2, 0., lc, 3, &ierr);
-  int p4 = gmshModelGeoAddPoint(-w / 2, h / 2, 0., lc, 4, &ierr);
-  int p5 = gmshModelGeoAddPoint(-w / 2, r, 0., lc, 5, &ierr);
-  int p6 = gmshModelGeoAddPoint(0., r, 0., lc, 6, &ierr);
-  int p7 = gmshModelGeoAddPoint(0., -r, 0., lc, 7, &ierr);
-  int p8 = gmshModelGeoAddPoint(-w / 2, -r, 0., lc, 8, &ierr);
-  int p9 = gmshModelGeoAddPoint(0., 0., 0., lc, 9, &ierr); // center of circle
-
-  int l1 = gmshModelGeoAddLine(p1, p2, 1, &ierr);
-  int l2 = gmshModelGeoAddLine(p2, p3, 2, &ierr);
-  int l3 = gmshModelGeoAddLine(p3, p4, 3, &ierr);
-  int l4 = gmshModelGeoAddLine(p4, p5, 4, &ierr);
-  int l5 = gmshModelGeoAddLine(p5, p6, 5, &ierr);
-  int l6 = gmshModelGeoAddCircleArc(p7, p9, p6, 6, 0., 0., 0., &ierr); // NB : the direction of the curve is reversed
-  int l7 = gmshModelGeoAddLine(p7, p8, 7, &ierr);
-  int l8 = gmshModelGeoAddLine(p8, p1, 8, &ierr);
-
-  int lTags[] = {l1, l2, l3, l4, l5, -l6, l7, l8}; // NB : "-l6" because the curve is reversed
-  int c1[] = {1};
-  c1[0] = gmshModelGeoAddCurveLoop(lTags, 8, 1, 0, &ierr);
-  int s1 = gmshModelGeoAddPlaneSurface(c1, 1, 1, &ierr);
-  gmshModelGeoSynchronize(&ierr);
-
-  gmshOptionSetNumber("Mesh.Algorithm", 3, &ierr);
-  gmshOptionSetNumber("Mesh.SaveAll", 1, &ierr);
-  gmshModelMeshGenerate(2, &ierr);
 }
 
 void geoMeshGenerateGeoFile(const char *filename) {
