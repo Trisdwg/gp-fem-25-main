@@ -1,5 +1,5 @@
 #include "fem.h"
-#include <gmshc.h>
+#include <gmsh/gmsh-4.13.1-MacOSARM-sdk/include/gmshc.h>
 
 //
 // Ici, vous pouvez définir votre géométrie :-)

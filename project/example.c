@@ -16,6 +16,8 @@ void elasticity_solve(const char *meshfile, const char *outfile, double E, doubl
   // Assemble and solve
   // femElasticityPrint(theProblem);
   //double *theSoluce = 
+
+  double *theSoluceBand= femFullSystemEliminate(theProblem->system);
   double *theSoluce = femElasticitySolve(theProblem);
 
   

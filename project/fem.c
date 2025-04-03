@@ -234,6 +234,11 @@ femIntegration *femIntegrationCreate(int n, femElementType type) {
 
 void femIntegrationFree(femIntegration *theRule) { free(theRule); }
 
+
+
+
+
+
 void _q1c0_x(double *xsi, double *eta) {
   xsi[0] = 1.0;
   eta[0] = 1.0;
@@ -329,6 +334,8 @@ void femDiscreteFree(femDiscrete *theSpace) { free(theSpace); }
 void femDiscreteXsi(femDiscrete *mySpace, double *xsi) { mySpace->x(xsi); }
 
 void femDiscretePhi(femDiscrete *mySpace, double xsi, double *phi) { mySpace->phi(xsi, phi); }
+
+void femDiscreteDphi(femDiscrete* mySpace, double xsi, double *dphidxsi){ mySpace->dphidx(xsi,dphidxsi);}
 
 void femDiscreteXsi2(femDiscrete *mySpace, double *xsi, double *eta) { mySpace->x2(xsi, eta); }
 

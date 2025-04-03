@@ -24,7 +24,7 @@
 #define MAXNAME 256
 
 typedef enum { FEM_TRIANGLE, FEM_QUAD, FEM_EDGE } femElementType;
-typedef enum { DIRICHLET_X, DIRICHLET_Y } femBoundaryType;
+typedef enum { DIRICHLET_X, DIRICHLET_Y , NEUMANN_X} femBoundaryType;
 typedef enum { PLANAR_STRESS, PLANAR_STRAIN, AXISYM } femElasticCase;
 
 /**
@@ -155,6 +155,8 @@ typedef struct {
   int nBoundaryConditions;
   femBoundaryCondition **conditions;
   int *constrainedNodes;
+  double *soluce;
+  double *residuals;
   femGeo *geometry;
   femDiscrete *space;
   femIntegration *rule;
@@ -181,9 +183,12 @@ void femIntegrationFree(femIntegration *theRule);
 femDiscrete *femDiscreteCreate(int n, femElementType type);
 void femDiscreteFree(femDiscrete *mySpace);
 void femDiscretePrint(femDiscrete *mySpace);
+void femDiscretePhi(femDiscrete *mySpace, double xsi, double *phi);
+void femDiscreteXsi(femDiscrete *mySpace, double *xsi);
 void femDiscreteXsi2(femDiscrete *mySpace, double *xsi, double *eta);
 void femDiscretePhi2(femDiscrete *mySpace, double xsi, double eta, double *phi);
 void femDiscreteDphi2(femDiscrete *mySpace, double xsi, double eta, double *dphidxsi, double *dphideta);
+void femDiscreteDphi(femDiscrete* mySpace, double xsi, double *dphidxsi);
 
 femFullSystem *femFullSystemCreate(int size);
 void femFullSystemFree(femFullSystem *mySystem);

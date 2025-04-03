@@ -11,7 +11,7 @@
 #ifndef _FEM_H_
 #define _FEM_H_
 
-#include "gmshc.h"
+#include "gmsh/gmsh-4.13.1-MacOSARM-sdk/include/gmshc.h"
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
