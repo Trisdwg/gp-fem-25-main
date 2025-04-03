@@ -223,12 +223,16 @@ void geoAssembleDomains(void){
   double rin = theGeometry->Rinner;
   double rout = theGeometry->Router;
   double limit = rin + (rout-rin)/2.0;
+  double forceR = theGeometry->forceRadius;
+  double forcePosx = theGeometry->forcePositionX;
+  double forcePosy = theGeometry->forcePositionY;
   // printf("Limit: %f\n", limit);
 
   int domainAppartenance[theGeometry->nDomains];
   // printf("Number of domains: %d\n", theGeometry->nDomains);
   int innerNElem = 0;
   int freeNElem = 0;
+  int forceNElem = 0;
 
   for(int i = 0; i < theGeometry->nDomains; i++)
   {
@@ -244,10 +248,15 @@ void geoAssembleDomains(void){
     double x = xA + (xB-xA)/2.0;
     double y = yA + (yB-yA)/2.0;
     double dist = sqrt((x)*(x) + (y)*(y));
+    double distForce = sqrt((x-forcePosx)*(x-forcePosx) + (y-forcePosy)*(y-forcePosy));
     // printf("Domain %i : %f\n", i, dist);
     if(dist < limit){
       domainAppartenance[i] = 1;
       innerNElem += currentDomain->nElem;
+    }
+    else if(distForce < forceR && xB < xA && fabs(yB-yA) < 0.35){
+      domainAppartenance[i] = 2;
+      forceNElem += currentDomain->nElem;
     }
     else{
       freeNElem += currentDomain->nElem;
@@ -264,8 +273,13 @@ void geoAssembleDomains(void){
   innerDomain->mesh = theGeometry->theEdges;
   innerDomain->nElem = innerNElem;
   innerDomain->elem = malloc(sizeof(int) * innerNElem);
+  femDomain *forceDomain = malloc(sizeof(femDomain));
+  forceDomain->mesh = theGeometry->theEdges;
+  forceDomain->nElem = forceNElem;
+  forceDomain->elem = malloc(sizeof(int) * forceNElem);
   int freeIndex = 0;
   int innerIndex = 0;
+  int forceIndex = 0;
   for(int i = 0; i < theGeometry->nDomains; i++)
   {
     // printf("Domain %d: %d\n", i, domainAppartenance[i]);  
@@ -274,6 +288,12 @@ void geoAssembleDomains(void){
       for(int j = 0; j < currentDomain->nElem; j++){
         innerDomain->elem[innerIndex] = currentDomain->elem[j];
         innerIndex++;
+      }
+    }
+    else if(domainAppartenance[i] == 2){
+      for(int j = 0; j < currentDomain->nElem; j++){
+        forceDomain->elem[forceIndex] = currentDomain->elem[j];
+        forceIndex++;
       }
     }
     else{
@@ -287,10 +307,11 @@ void geoAssembleDomains(void){
     currentDomain->mesh = NULL;
     free(currentDomain);
   }
-  theGeometry->theDomains = realloc(theGeometry->theDomains, sizeof(femDomain *) * 2);
+  theGeometry->theDomains = realloc(theGeometry->theDomains, sizeof(femDomain *) * 3);
   theGeometry->theDomains[0] = freeDomain;
   theGeometry->theDomains[1] = innerDomain;
-  theGeometry->nDomains = 2;
+  theGeometry->theDomains[2] = forceDomain;
+  theGeometry->nDomains = 3;
 
   return;
 }

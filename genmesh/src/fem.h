@@ -129,7 +129,6 @@ void geoMeshPrint(void);
 void geoMeshWrite(const char *filename);
 void geoMeshRead(const char *filename);
 void geoAssembleDomains(void);
-void geoFuseDomains(int iDomain1, int iDomain2);
 void geoSetDomainName(int iDomain, char *name);
 int geoGetDomain(char *name);
 void geoFinalize(void);

@@ -78,6 +78,7 @@ int main(int argc, char *argv[]) {
   geoAssembleDomains();
   geoSetDomainName(0, "Free");
   geoSetDomainName(1, "Inner");
+  geoSetDomainName(2, "Force");
 
   geoMeshWrite("../../data/mesh.txt");
 
